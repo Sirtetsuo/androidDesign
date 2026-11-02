@@ -23,6 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,6 +70,7 @@ fun MockupCanvas(
     onDeleteElement: (String) -> Unit,
     onDuplicateElement: (String) -> Unit,
     onEditElement: (String) -> Unit,
+    onToggleLock: (String, Boolean) -> Unit = { _, _ -> },
     onDragStateChange: (Boolean) -> Unit = {},
     graphicsLayer: GraphicsLayer? = null,
     modifier: Modifier = Modifier
@@ -214,37 +217,41 @@ fun MockupCanvas(
                                 if (isSelected) {
                                     Modifier.border(
                                         width = 2.dp,
-                                        color = MaterialTheme.colorScheme.primary,
+                                        color = if (element.isLocked) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                                         shape = RoundedCornerShape(4.dp)
                                     )
                                 } else Modifier
                             )
-                            .pointerInput(element.id) {
-                                detectDragGestures(
-                                    onDragStart = {
-                                        onSelectElement(element.id)
-                                        dragAccumX = elementXDp
-                                        dragAccumY = elementYDp
-                                        onDragStateChange(true)
-                                    },
-                                    onDragEnd = { onDragStateChange(false) },
-                                    onDragCancel = { onDragStateChange(false) },
-                                    onDrag = { change, dragAmount ->
-                                        change.consume()
-                                        val deltaDpX = with(density) { dragAmount.x.toDp().value }
-                                        val deltaDpY = with(density) { dragAmount.y.toDp().value }
+                            .then(
+                                if (!element.isLocked) {
+                                    Modifier.pointerInput(element.id) {
+                                        detectDragGestures(
+                                            onDragStart = {
+                                                onSelectElement(element.id)
+                                                dragAccumX = elementXDp
+                                                dragAccumY = elementYDp
+                                                onDragStateChange(true)
+                                            },
+                                            onDragEnd = { onDragStateChange(false) },
+                                            onDragCancel = { onDragStateChange(false) },
+                                            onDrag = { change, dragAmount ->
+                                                change.consume()
+                                                val deltaDpX = with(density) { dragAmount.x.toDp().value }
+                                                val deltaDpY = with(density) { dragAmount.y.toDp().value }
 
-                                        dragAccumX += deltaDpX
-                                        dragAccumY += deltaDpY
+                                                dragAccumX += deltaDpX
+                                                dragAccumY += deltaDpY
 
-                                        onUpdateElementPosition(
-                                            element.id,
-                                            dragAccumX,
-                                            dragAccumY
+                                                onUpdateElementPosition(
+                                                    element.id,
+                                                    dragAccumX,
+                                                    dragAccumY
+                                                )
+                                            }
                                         )
                                     }
-                                )
-                            }
+                                } else Modifier
+                            )
                             .clickable {
                                 onSelectElement(element.id)
                             }
@@ -271,6 +278,19 @@ fun MockupCanvas(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                                 ) {
+                                    // Lock / Unlock Button
+                                    IconButton(
+                                        onClick = { onToggleLock(element.id, !element.isLocked) },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (element.isLocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                                            contentDescription = if (element.isLocked) "Déverrouiller" else "Verrouiller",
+                                            tint = if (element.isLocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+
                                     IconButton(
                                         onClick = { onEditElement(element.id) },
                                         modifier = Modifier.size(32.dp)
@@ -307,87 +327,91 @@ fun MockupCanvas(
                                 }
                             }
 
-                            // DEDICATED DRAG ANCHOR HANDLE (Ancre de déplacement ✥) at Top-Left
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopStart)
-                                    .offset(x = (-14).dp, y = (-14).dp)
-                                    .size(32.dp)
-                                    .shadow(6.dp, CircleShape)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary)
-                                    .border(2.dp, Color.White, CircleShape)
-                                    .pointerInput(element.id) {
-                                        detectDragGestures(
-                                            onDragStart = {
-                                                onSelectElement(element.id)
-                                                dragAccumX = elementXDp
-                                                dragAccumY = elementYDp
-                                                onDragStateChange(true)
-                                            },
-                                            onDragEnd = { onDragStateChange(false) },
-                                            onDragCancel = { onDragStateChange(false) },
-                                            onDrag = { change, dragAmount ->
-                                                change.consume()
-                                                val deltaDpX = with(density) { dragAmount.x.toDp().value }
-                                                val deltaDpY = with(density) { dragAmount.y.toDp().value }
+                            // DEDICATED DRAG ANCHOR HANDLE (Ancre de déplacement ✥) at Top-Left (ONLY WHEN UNLOCKED)
+                            if (!element.isLocked) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)
+                                        .offset(x = (-14).dp, y = (-14).dp)
+                                        .size(32.dp)
+                                        .shadow(6.dp, CircleShape)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                        .border(2.dp, Color.White, CircleShape)
+                                        .pointerInput(element.id) {
+                                            detectDragGestures(
+                                                onDragStart = {
+                                                    onSelectElement(element.id)
+                                                    dragAccumX = elementXDp
+                                                    dragAccumY = elementYDp
+                                                    onDragStateChange(true)
+                                                },
+                                                onDragEnd = { onDragStateChange(false) },
+                                                onDragCancel = { onDragStateChange(false) },
+                                                onDrag = { change, dragAmount ->
+                                                    change.consume()
+                                                    val deltaDpX = with(density) { dragAmount.x.toDp().value }
+                                                    val deltaDpY = with(density) { dragAmount.y.toDp().value }
 
-                                                dragAccumX += deltaDpX
-                                                dragAccumY += deltaDpY
+                                                    dragAccumX += deltaDpX
+                                                    dragAccumY += deltaDpY
 
-                                                onUpdateElementPosition(
-                                                    element.id,
-                                                    dragAccumX,
-                                                    dragAccumY
-                                                )
-                                            }
-                                        )
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.OpenWith,
-                                    contentDescription = "Ancre de déplacement",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                                    onUpdateElementPosition(
+                                                        element.id,
+                                                        dragAccumX,
+                                                        dragAccumY
+                                                    )
+                                                }
+                                            )
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.OpenWith,
+                                        contentDescription = "Ancre de déplacement",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
 
-                            // CORNER RESIZE HANDLE (↘) at Bottom-Right
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .offset(x = 10.dp, y = 10.dp)
-                                    .size(28.dp)
-                                    .shadow(4.dp, CircleShape)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.secondary)
-                                    .border(2.dp, Color.White, CircleShape)
-                                    .pointerInput(element.id) {
-                                        detectDragGestures(
-                                            onDragStart = { onDragStateChange(true) },
-                                            onDragEnd = { onDragStateChange(false) },
-                                            onDragCancel = { onDragStateChange(false) },
-                                            onDrag = { change, dragAmount ->
-                                                change.consume()
-                                                val dxDp = with(density) { dragAmount.x.toDp().value }
-                                                val dyDp = with(density) { dragAmount.y.toDp().value }
+                            // CORNER RESIZE HANDLE (↘) at Bottom-Right (ONLY WHEN UNLOCKED)
+                            if (!element.isLocked) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .offset(x = 10.dp, y = 10.dp)
+                                        .size(28.dp)
+                                        .shadow(4.dp, CircleShape)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.secondary)
+                                        .border(2.dp, Color.White, CircleShape)
+                                        .pointerInput(element.id) {
+                                            detectDragGestures(
+                                                onDragStart = { onDragStateChange(true) },
+                                                onDragEnd = { onDragStateChange(false) },
+                                                onDragCancel = { onDragStateChange(false) },
+                                                onDrag = { change, dragAmount ->
+                                                    change.consume()
+                                                    val dxDp = with(density) { dragAmount.x.toDp().value }
+                                                    val dyDp = with(density) { dragAmount.y.toDp().value }
 
-                                                val newWidth = max(40, (element.widthDp + dxDp).roundToInt())
-                                                val newHeight = max(20, (element.heightDp + dyDp).roundToInt())
+                                                    val newWidth = max(40, (element.widthDp + dxDp).roundToInt())
+                                                    val newHeight = max(20, (element.heightDp + dyDp).roundToInt())
 
-                                                onUpdateElementSize(element.id, newWidth, newHeight)
-                                            }
-                                        )
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "↘",
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                                    onUpdateElementSize(element.id, newWidth, newHeight)
+                                                }
+                                            )
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "↘",
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }

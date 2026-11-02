@@ -72,6 +72,7 @@ class MockupRepository(context: Context) {
             elemObj.put("fontSizeSp", elem.fontSizeSp)
             elemObj.put("zOrder", elem.zOrder)
             elemObj.put("showBorder", elem.showBorder)
+            elemObj.put("isLocked", elem.isLocked)
             if (elem.imageUri != null) {
                 elemObj.put("imageUri", elem.imageUri)
             }
@@ -109,7 +110,8 @@ class MockupRepository(context: Context) {
                     fontSizeSp = elemObj.optInt("fontSizeSp", 16),
                     zOrder = elemObj.optInt("zOrder", i),
                     showBorder = elemObj.optBoolean("showBorder", true),
-                    imageUri = imgUri
+                    imageUri = imgUri,
+                    isLocked = elemObj.optBoolean("isLocked", false)
                 )
             )
         }

@@ -142,6 +142,13 @@ class MockupViewModel(
         updateCurrentDesignElements(updatedElements, selectElementId = id)
     }
 
+    fun toggleElementLock(id: String, isLocked: Boolean) {
+        val updatedElements = _uiState.value.currentDesign.elements.map { elem ->
+            if (elem.id == id) elem.copy(isLocked = isLocked) else elem
+        }
+        updateCurrentDesignElements(updatedElements, selectElementId = id)
+    }
+
     fun duplicateElement(id: String) {
         val target = _uiState.value.currentDesign.elements.find { it.id == id } ?: return
         val copyElement = target.copy(

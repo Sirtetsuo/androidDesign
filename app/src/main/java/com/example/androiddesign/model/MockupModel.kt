@@ -26,7 +26,8 @@ data class UiElement(
     val fontSizeSp: Int = 16,
     val zOrder: Int = 0,
     val showBorder: Boolean = true,
-    val imageUri: String? = null
+    val imageUri: String? = null,
+    val isLocked: Boolean = false
 )
 
 data class MockupDesign(

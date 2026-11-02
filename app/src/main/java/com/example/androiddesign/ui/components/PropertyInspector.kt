@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FlipToBack
 import androidx.compose.material.icons.filled.FlipToFront
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -48,6 +49,7 @@ fun PropertyInspector(
     onUpdateHeight: (Int) -> Unit,
     onUpdateFontSize: (Int) -> Unit,
     onUpdateShowBorder: (Boolean) -> Unit,
+    onUnlock: () -> Unit = {},
     onBringForward: () -> Unit,
     onSendBackward: () -> Unit,
     onDuplicate: () -> Unit,
@@ -88,13 +90,22 @@ fun PropertyInspector(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = element.type.displayName,
+                        text = "${element.type.displayName} • Verrouillé 🔒",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
 
                 Row {
+                    // UNLOCK BUTTON 🔓
+                    IconButton(onClick = onUnlock, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.LockOpen,
+                            contentDescription = "Déverrouiller pour déplacer",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     IconButton(onClick = onDuplicate, modifier = Modifier.size(36.dp)) {
                         Icon(
                             imageVector = Icons.Default.ContentCopy,
@@ -336,7 +347,8 @@ fun PropertyInspectorPreview() {
                 widthDp = 200,
                 heightDp = 50,
                 fontSizeSp = 16,
-                showBorder = true
+                showBorder = true,
+                isLocked = true
             ),
             isLandscape = false,
             onUpdateLabel = {},
@@ -344,6 +356,7 @@ fun PropertyInspectorPreview() {
             onUpdateHeight = {},
             onUpdateFontSize = {},
             onUpdateShowBorder = {},
+            onUnlock = {},
             onBringForward = {},
             onSendBackward = {},
             onDuplicate = {},

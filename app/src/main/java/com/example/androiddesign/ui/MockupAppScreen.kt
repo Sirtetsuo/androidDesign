@@ -236,6 +236,7 @@ fun MockupAppScreen(
                             onDeleteElement = { id -> viewModel.deleteElement(id) },
                             onDuplicateElement = { id -> viewModel.duplicateElement(id) },
                             onEditElement = { id -> viewModel.selectElement(id) },
+                            onToggleLock = { id, locked -> viewModel.toggleElementLock(id, locked) },
                             onDragStateChange = { dragging -> isDraggingOrResizing = dragging },
                             graphicsLayer = graphicsLayer
                         )
@@ -261,7 +262,7 @@ fun MockupAppScreen(
                     // Right Property Inspector Area (40%)
                     val selectedElement = uiState.currentDesign.elements.find { it.id == uiState.selectedElementId }
                     AnimatedVisibility(
-                        visible = selectedElement != null && !isDraggingOrResizing,
+                        visible = selectedElement != null && selectedElement.isLocked && !isDraggingOrResizing,
                         enter = slideInHorizontally(initialOffsetX = { it }),
                         exit = slideOutHorizontally(targetOffsetX = { it }),
                         modifier = Modifier.weight(0.4f).fillMaxHeight()
@@ -275,6 +276,7 @@ fun MockupAppScreen(
                                 onUpdateHeight = { newHeight -> viewModel.updateElementSize(element.id, element.widthDp, newHeight) },
                                 onUpdateFontSize = { newSize -> viewModel.updateElementFontSize(element.id, newSize) },
                                 onUpdateShowBorder = { showBorder -> viewModel.updateElementShowBorder(element.id, showBorder) },
+                                onUnlock = { viewModel.toggleElementLock(element.id, false) },
                                 onBringForward = { viewModel.bringForward(element.id) },
                                 onSendBackward = { viewModel.sendBackward(element.id) },
                                 onDuplicate = { viewModel.duplicateElement(element.id) },
@@ -298,6 +300,7 @@ fun MockupAppScreen(
                         onDeleteElement = { id -> viewModel.deleteElement(id) },
                         onDuplicateElement = { id -> viewModel.duplicateElement(id) },
                         onEditElement = { id -> viewModel.selectElement(id) },
+                        onToggleLock = { id, locked -> viewModel.toggleElementLock(id, locked) },
                         onDragStateChange = { dragging -> isDraggingOrResizing = dragging },
                         graphicsLayer = graphicsLayer
                     )
@@ -320,10 +323,10 @@ fun MockupAppScreen(
                         )
                     }
 
-                    // Property Inspector when an element is selected (HIDDEN DURING DRAGGING/RESIZING)
+                    // Property Inspector when an element is LOCKED (HIDDEN WHEN UNLOCKED OR DRAGGING/RESIZING)
                     val selectedElement = uiState.currentDesign.elements.find { it.id == uiState.selectedElementId }
                     AnimatedVisibility(
-                        visible = selectedElement != null && !isDraggingOrResizing,
+                        visible = selectedElement != null && selectedElement.isLocked && !isDraggingOrResizing,
                         enter = slideInVertically(initialOffsetY = { it }),
                         exit = slideOutVertically(targetOffsetY = { it }),
                         modifier = Modifier.align(Alignment.BottomCenter)
@@ -337,6 +340,7 @@ fun MockupAppScreen(
                                 onUpdateHeight = { newHeight -> viewModel.updateElementSize(element.id, element.widthDp, newHeight) },
                                 onUpdateFontSize = { newSize -> viewModel.updateElementFontSize(element.id, newSize) },
                                 onUpdateShowBorder = { showBorder -> viewModel.updateElementShowBorder(element.id, showBorder) },
+                                onUnlock = { viewModel.toggleElementLock(element.id, false) },
                                 onBringForward = { viewModel.bringForward(element.id) },
                                 onSendBackward = { viewModel.sendBackward(element.id) },
                                 onDuplicate = { viewModel.duplicateElement(element.id) },
