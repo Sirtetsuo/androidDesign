@@ -200,9 +200,11 @@ fun MockupCanvas(
                     val elementXDp = element.xDp.coerceIn(0f, max(0f, maxWidthDp.value - element.widthDp))
                     val elementYDp = element.yDp.coerceIn(0f, max(0f, maxHeightDp.value - element.heightDp))
 
-                    // Local drag accumulator for smooth, stutter-free movement
+                    // Local drag accumulator for smooth, stutter-free movement and unconstrained resizing
                     var dragAccumX by remember(element.id, element.xDp) { mutableFloatStateOf(elementXDp) }
                     var dragAccumY by remember(element.id, element.yDp) { mutableFloatStateOf(elementYDp) }
+                    var resizeAccumW by remember(element.id, element.widthDp) { mutableFloatStateOf(element.widthDp.toFloat()) }
+                    var resizeAccumH by remember(element.id, element.heightDp) { mutableFloatStateOf(element.heightDp.toFloat()) }
 
                     Box(
                         modifier = Modifier
@@ -375,7 +377,7 @@ fun MockupCanvas(
                                 }
                             }
 
-                            // CORNER RESIZE HANDLE (↘) at Bottom-Right (ONLY WHEN UNLOCKED)
+                            // CORNER RESIZE HANDLE (↘) at Bottom-Right (UNCONSTRAINED 1:1 RESIZING)
                             if (!element.isLocked) {
                                 Box(
                                     modifier = Modifier
@@ -388,7 +390,11 @@ fun MockupCanvas(
                                         .border(2.dp, Color.White, CircleShape)
                                         .pointerInput(element.id) {
                                             detectDragGestures(
-                                                onDragStart = { onDragStateChange(true) },
+                                                onDragStart = {
+                                                    resizeAccumW = element.widthDp.toFloat()
+                                                    resizeAccumH = element.heightDp.toFloat()
+                                                    onDragStateChange(true)
+                                                },
                                                 onDragEnd = { onDragStateChange(false) },
                                                 onDragCancel = { onDragStateChange(false) },
                                                 onDrag = { change, dragAmount ->
@@ -396,10 +402,15 @@ fun MockupCanvas(
                                                     val dxDp = with(density) { dragAmount.x.toDp().value }
                                                     val dyDp = with(density) { dragAmount.y.toDp().value }
 
-                                                    val newWidth = max(40, (element.widthDp + dxDp).roundToInt())
-                                                    val newHeight = max(20, (element.heightDp + dyDp).roundToInt())
+                                                    // Unconstrained independent accumulation in X (width) and Y (height)
+                                                    resizeAccumW = max(20f, resizeAccumW + dxDp)
+                                                    resizeAccumH = max(10f, resizeAccumH + dyDp)
 
-                                                    onUpdateElementSize(element.id, newWidth, newHeight)
+                                                    onUpdateElementSize(
+                                                        element.id,
+                                                        resizeAccumW.roundToInt(),
+                                                        resizeAccumH.roundToInt()
+                                                    )
                                                 }
                                             )
                                         },
