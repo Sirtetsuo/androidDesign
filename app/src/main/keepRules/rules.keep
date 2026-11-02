@@ -1,0 +1,34 @@
+# Add project specific R8 rules here.
+# AGP will combine all keep rule files in src/main/keepRules to pass to R8
+#
+# For more details, see
+#   https://d.android.com/r/tools/r8/keep-rules
+
+# --- KOTLIN COROUTINES & CORE ---
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+-keep class kotlin.** { *; }
+
+# --- ANDROIDX LIFECYCLE / VIEWMODEL ---
+-keepclassmembers class * extends androidx.lifecycle.ViewModel {
+    <init>(...);
+}
+
+# --- JSON SERIALIZATION / DESERIALIZATION ---
+# L'application utilise org.json pour sauvegarder et charger les maquettes.
+# Empêche R8 d'obfusquer les Data Classes utilisées dans les requêtes JSON.
+-keep class com.example.androiddesign.model.** { *; }
+
+# Protège l'énumération ComponentType (utilisée avec .name et .valueOf() dans MockupRepository)
+-keepclassmembers enum com.example.androiddesign.model.ComponentType {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# --- COIL (Image Loading) ---
+-keep class coil.request.** { *; }
+
+# --- PREVENT R8 CRASHES ON OPTIMIZATION ---
+# Désactive l'obfuscation extrême qui peut causer des fermetures soudaines sur certaines librairies
+-dontwarn java.lang.invoke.*
+-dontwarn org.json.**
