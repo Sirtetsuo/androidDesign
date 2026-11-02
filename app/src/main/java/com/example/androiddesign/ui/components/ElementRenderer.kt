@@ -12,24 +12,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +47,9 @@ fun RenderElementMockup(
     element: UiElement,
     modifier: Modifier = Modifier
 ) {
+    // PRO ARCHITECTURE: Render non-functional visual mockups using static, non-interactive Surfaces/Boxes.
+    // This prevents Material widgets (Button, Checkbox, Switch) from consuming click pointer events,
+    // ensuring the canvas element remains 100% clickable and selectable even when locked!
     Box(modifier = modifier) {
         when (element.type) {
             ComponentType.TEXT_LABEL -> {
@@ -79,45 +79,57 @@ fun RenderElementMockup(
             }
 
             ComponentType.BUTTON -> {
-                Button(
-                    onClick = { /* Non-functional mockup */ },
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(
-                        text = element.label,
-                        fontSize = element.fontSizeSp.sp
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text(
+                            text = element.label,
+                            fontSize = element.fontSizeSp.sp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 
             ComponentType.TEXT_INPUT -> {
-                if (element.showBorder) {
-                    OutlinedTextField(
-                        value = "",
-                        onValueChange = { /* Non-functional mockup */ },
-                        label = { Text(element.label) },
-                        placeholder = { Text("Entrer le texte...") },
-                        readOnly = true,
-                        enabled = false,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    TextField(
-                        value = "",
-                        onValueChange = { /* Non-functional mockup */ },
-                        label = { Text(element.label) },
-                        placeholder = { Text("Entrer le texte...") },
-                        readOnly = true,
-                        enabled = false,
-                        colors = TextFieldDefaults.colors(
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent,
-                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        ),
-                        modifier = Modifier.fillMaxSize()
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            color = if (element.showBorder) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerLow,
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .then(
+                            if (element.showBorder) {
+                                Modifier.border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                            } else Modifier
+                        )
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Column {
+                        Text(
+                            text = element.label,
+                            fontSize = (element.fontSizeSp * 0.75f).coerceAtLeast(10f).sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Entrer le texte...",
+                            fontSize = element.fontSizeSp.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
                 }
             }
 
@@ -125,16 +137,22 @@ fun RenderElementMockup(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 4.dp)
                 ) {
-                    Checkbox(
-                        checked = true,
-                        onCheckedChange = null,
-                        enabled = false
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("✓", color = MaterialTheme.colorScheme.onPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    }
                     Text(
                         text = element.label,
                         fontSize = element.fontSizeSp.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }
@@ -146,22 +164,31 @@ fun RenderElementMockup(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 4.dp)
+                        .padding(horizontal = 8.dp)
                 ) {
                     Text(
                         text = element.label,
-                        fontSize = element.fontSizeSp.sp
+                        fontSize = element.fontSizeSp.sp,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Switch(
-                        checked = true,
-                        onCheckedChange = null,
-                        enabled = false
-                    )
+                    Box(
+                        modifier = Modifier
+                            .width(44.dp)
+                            .height(24.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            .padding(2.dp),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .background(MaterialTheme.colorScheme.onPrimary, CircleShape)
+                        )
+                    }
                 }
             }
 
             ComponentType.IMAGE_PLACEHOLDER -> {
-                // PRO OPTIMIZATION: Using Coil AsyncImage for fast, memory-safe, non-blocking disk I/O
                 if (!element.imageUri.isNullOrEmpty()) {
                     AsyncImage(
                         model = element.imageUri,
@@ -344,6 +371,19 @@ fun ElementRendererPreview() {
 
             RenderElementMockup(
                 element = UiElement(
+                    type = ComponentType.BUTTON,
+                    label = "Bouton Valider",
+                    xDp = 0f,
+                    yDp = 0f,
+                    widthDp = 180,
+                    heightDp = 48,
+                    showBorder = true
+                ),
+                modifier = Modifier.height(48.dp)
+            )
+
+            RenderElementMockup(
+                element = UiElement(
                     type = ComponentType.MENU_HAMBURGER,
                     label = "Menu Principal",
                     xDp = 0f,
@@ -353,19 +393,6 @@ fun ElementRendererPreview() {
                     showBorder = true
                 ),
                 modifier = Modifier.size(48.dp)
-            )
-
-            RenderElementMockup(
-                element = UiElement(
-                    type = ComponentType.CARD_CONTAINER,
-                    label = "Carte avec Bordure Visible",
-                    xDp = 0f,
-                    yDp = 0f,
-                    widthDp = 240,
-                    heightDp = 80,
-                    showBorder = true
-                ),
-                modifier = Modifier.height(80.dp)
             )
         }
     }
